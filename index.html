@@ -7,13 +7,16 @@
     
     <link rel="apple-touch-icon" href="icon.png">
     <link rel="icon" type="image/png" href="icon.png">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    
+    <link rel="manifest" href="data:application/manifest+json,{%22name%22:%22Debt%20Management%22,%22short_name%22:%22Debt%22,%22start_url%22:%22index.html%22,%22display%22:%22standalone%22,%22background_color%22:%22#111827%22,%22theme_color%22:%22#111827%22,%22icons%22:[{%22src%22:%22icon.png%22,%22sizes%22:%22192x192%22,%22type%22:%22image/png%22}]}">
 
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body { background-color: #111827; color: #f3f4f6; font-family: sans-serif; }
         .card { background-color: #1f2937; border-radius: 1rem; padding: 1.5rem; margin-bottom: 1.5rem; border: 1px solid #374151; }
         input { background-color: #111827; border: 1px solid #4b5563; color: white; padding: 0.75rem; border-radius: 0.5rem; width: 100%; }
-        /* Prevent zoom on mobile inputs */
         input:focus { font-size: 16px; outline: none; border-color: #4ade80; }
     </style>
 </head>
