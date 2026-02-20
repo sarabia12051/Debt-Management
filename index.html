@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Debt Management</title>
     
-    <link rel="apple-touch-icon" href="10253.png">
-    <link rel="icon" href="10253.png">
+    <link rel="apple-touch-icon" href="icon.png">
+    <link rel="icon" type="image/png" href="icon.png">
 
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -46,8 +46,7 @@
                 <h2 class="text-orange-400 font-italic italic font-bold">Step 2: Fixed Expenses</h2>
                 <button onclick="addExpense()" class="bg-orange-600 text-[10px] px-2 py-1 rounded font-bold uppercase">+ Add Expense</button>
             </div>
-            <div id="expense-list" class="space-y-3 text-sm">
-                </div>
+            <div id="expense-list" class="space-y-3 text-sm"></div>
         </div>
 
         <div class="card">
@@ -55,8 +54,7 @@
                 <h2 class="text-blue-400 font-italic italic font-bold">Step 3: Debt Manager</h2>
                 <button onclick="addDebt()" class="bg-blue-600 text-[10px] px-2 py-1 rounded font-bold uppercase">+ Add Debt</button>
             </div>
-            <div id="debt-list" class="space-y-3 text-sm">
-                </div>
+            <div id="debt-list" class="space-y-3 text-sm"></div>
         </div>
 
         <div id="results" class="hidden card border-yellow-500/50 bg-yellow-900/10">
@@ -68,7 +66,6 @@
     </div>
 
     <script>
-        // Load the vault total from the phone's memory
         let vault = parseFloat(localStorage.getItem('vault')) || 0;
         updateVault();
 
@@ -117,7 +114,6 @@
                 <div class="flex justify-between"><span>Total Debt Paid:</span> <span class="text-red-400">-$${debtTotal.toFixed(2)}</span></div>
                 <div class="border-t border-gray-700 my-2 pt-2 flex justify-between font-bold text-lg"><span>Leftover:</span> <span class="text-green-400">$${tempRemaining.toFixed(2)}</span></div>
             `;
-            // Scroll to results on small screens
             results.scrollIntoView({ behavior: 'smooth' });
         }
 
