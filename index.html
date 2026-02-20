@@ -23,4 +23,127 @@
         <div class="card bg-blue-900/30 border-blue-500/50 text-center">
             <h2 class="text-xs uppercase tracking-widest text-blue-400 font-bold mb-2">Total Savings Vault</h2>
             <div id="vault-display" class="text-5xl font-black mb-4">$0.00</div>
-            <div class="
+            <div class="flex gap-2">
+                <input type="number" id="withdraw-amount" placeholder="0.00" class="text-sm">
+                <button onclick="withdraw()" class="bg-red-900/50 text-red-200 border border-red-700 px-4 py-2 rounded-lg text-xs font-bold uppercase whitespace-nowrap">Withdraw</button>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2 class="text-green-400 font-italic italic mb-4 font-bold">Step 1: Deposit Amount</h2>
+            <div class="grid grid-cols-3 gap-2">
+                <div class="col-span-2">
+                    <input type="number" id="paycheck" placeholder="Paycheck Amount ($)">
+                </div>
+                <button onclick="runLogic()" class="bg-green-600 hover:bg-green-500 text-white font-bold rounded-lg transition-all text-xs uppercase flex items-center justify-center text-center">
+                    Deposit
+                </button>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-orange-400 font-italic italic font-bold">Step 2: Fixed Expenses</h2>
+                <button onclick="addExpense()" class="bg-orange-600 text-[10px] px-2 py-1 rounded font-bold uppercase">+ Add Expense</button>
+            </div>
+            <div id="expense-list" class="space-y-3 text-sm">
+                </div>
+        </div>
+
+        <div class="card">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-blue-400 font-italic italic font-bold">Step 3: Debt Manager</h2>
+                <button onclick="addDebt()" class="bg-blue-600 text-[10px] px-2 py-1 rounded font-bold uppercase">+ Add Debt</button>
+            </div>
+            <div id="debt-list" class="space-y-3 text-sm">
+                </div>
+        </div>
+
+        <div id="results" class="hidden card border-yellow-500/50 bg-yellow-900/10">
+            <h2 class="text-yellow-500 font-bold mb-3 uppercase text-xs">The Breakdown</h2>
+            <div id="results-content" class="text-sm space-y-2"></div>
+            <button onclick="confirmSavings()" class="w-full mt-4 bg-yellow-600 hover:bg-yellow-500 py-3 rounded-xl font-bold uppercase tracking-tight transition-colors">Move Remaining to Vault</button>
+        </div>
+
+    </div>
+
+    <script>
+        // Load the vault total from the phone's memory
+        let vault = parseFloat(localStorage.getItem('vault')) || 0;
+        updateVault();
+
+        function updateVault() {
+            document.getElementById('vault-display').innerText = `$${vault.toFixed(2)}`;
+            localStorage.setItem('vault', vault);
+        }
+
+        function addExpense() {
+            const container = document.getElementById('expense-list');
+            const div = document.createElement('div');
+            div.className = 'flex gap-2 animate-in fade-in slide-in-from-left-2 duration-300';
+            div.innerHTML = `<input type="text" placeholder="e.g. Rent" class="w-full text-xs p-2"> <input type="number" placeholder="$" class="w-24 expense-amt text-xs p-2">`;
+            container.appendChild(div);
+        }
+
+        function addDebt() {
+            const container = document.getElementById('debt-list');
+            const div = document.createElement('div');
+            div.className = 'flex gap-2 animate-in fade-in slide-in-from-left-2 duration-300';
+            div.innerHTML = `<input type="text" placeholder="e.g. Visa" class="w-full text-xs p-2"> <input type="number" placeholder="$" class="w-24 debt-amt text-xs p-2">`;
+            container.appendChild(div);
+        }
+
+        let tempRemaining = 0;
+
+        function runLogic() {
+            let total = parseFloat(document.getElementById('paycheck').value) || 0;
+            const expenses = document.querySelectorAll('.expense-amt');
+            const debts = document.querySelectorAll('.debt-amt');
+            
+            let expenseTotal = 0;
+            expenses.forEach(e => expenseTotal += (parseFloat(e.value) || 0));
+            
+            let debtTotal = 0;
+            debts.forEach(d => debtTotal += (parseFloat(d.value) || 0));
+
+            tempRemaining = total - expenseTotal - debtTotal;
+            
+            const results = document.getElementById('results');
+            const content = document.getElementById('results-content');
+            results.classList.remove('hidden');
+            content.innerHTML = `
+                <div class="flex justify-between"><span>Total Income:</span> <span>$${total.toFixed(2)}</span></div>
+                <div class="flex justify-between"><span>Total Expenses:</span> <span class="text-red-400">-$${expenseTotal.toFixed(2)}</span></div>
+                <div class="flex justify-between"><span>Total Debt Paid:</span> <span class="text-red-400">-$${debtTotal.toFixed(2)}</span></div>
+                <div class="border-t border-gray-700 my-2 pt-2 flex justify-between font-bold text-lg"><span>Leftover:</span> <span class="text-green-400">$${tempRemaining.toFixed(2)}</span></div>
+            `;
+            // Scroll to results on small screens
+            results.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function confirmSavings() {
+            if(tempRemaining > 0) {
+                vault += tempRemaining;
+                updateVault();
+                alert(`Success! $${tempRemaining.toFixed(2)} added to your vault.`);
+                document.getElementById('results').classList.add('hidden');
+                document.getElementById('paycheck').value = '';
+            } else {
+                alert("Nothing leftover to save!");
+            }
+        }
+
+        function withdraw() {
+            const amt = parseFloat(document.getElementById('withdraw-amount').value) || 0;
+            if(amt > 0 && amt <= vault) {
+                vault -= amt;
+                updateVault();
+                document.getElementById('withdraw-amount').value = '';
+                alert(`Withdrew $${amt.toFixed(2)}`);
+            } else {
+                alert("Insufficient funds or invalid amount.");
+            }
+        }
+    </script>
+</body>
+</html>
