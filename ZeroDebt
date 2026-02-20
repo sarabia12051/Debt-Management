@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Battle Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-900 text-gray-100 min-h-screen p-4 pb-20 font-sans">
+
+    <div class="max-w-2xl mx-auto space-y-6">
+        
+        <section class="bg-blue-900/30 rounded-xl p-6 border border-blue-500/50 shadow-lg text-center">
+            <h2 class="text-xs uppercase tracking-widest text-blue-400 mb-1">Total Savings Vault</h2>
+            <div class="text-4xl font-mono font-bold text-white" id="vaultDisplay">$0.00</div>
+            <div class="flex justify-center gap-4 mt-4">
+                <input type="number" id="withdrawAmt" placeholder="0.00" class="w-24 bg-gray-900 border border-gray-700 rounded px-2 text-sm">
+                <button onclick="adjustVault('out')" class="bg-red-600/20 hover:bg-red-600 text-red-400 hover:text-white px-3 py-1 rounded text-xs font-bold transition">WITHDRAW</button>
+            </div>
+        </section>
+
+        <section class="bg-gray-800 rounded-xl p-6 border border-green-900/50 shadow-lg">
+            <h2 class="text-lg font-semibold mb-4 text-green-400 italic">Step 1: Deposit Amount</h2>
+            <div class="flex gap-2">
+                <input type="number" id="paycheckInput" placeholder="Paycheck Amount ($)" class="flex-1 bg-gray-900 border border-gray-700 rounded p-3 text-xl font-mono text-green-400 outline-none">
+                <button onclick="calculate()" class="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded font-bold transition uppercase">Run Logic</button>
+            </div>
+        </section>
+
+        <section class="bg-gray-800 rounded-xl p-6 border border-gray-700">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-lg font-semibold italic text-orange-400">Step 2: Fixed Expenses</h2>
+                <button onclick="addItem('fixed')" class="text-[10px] bg-orange-600 px-2 py-1 rounded font-bold uppercase">+ Add Expense</button>
+            </div>
+            <div id="fixedContainer" class="space-y-2"></div>
+        </section>
+
+        <section class="bg-gray-800 rounded-xl p-6 border border-gray-700">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-lg font-semibold italic text-blue-400">Step 3: Debt Manager</h2>
+                <button onclick="addItem('debt')" class="text-[10px] bg-blue-600 px-2 py-1 rounded font-bold uppercase">+ Add Debt</button>
+            </div>
+            <div id="debtContainer" class="space-y-4"></div>
+        </section>
+
+        <div id="resultsArea" class="hidden animate-in fade-in duration-500">
+            <section class="bg-gray-800 rounded-xl overflow-hidden border border-gray-700 shadow-2xl">
+                <div class="p-4 bg-gray-900 border-b border-gray-700 flex justify-between items-center">
+                    <span class="font-bold uppercase text-xs text-blue-400">The Battle Plan</span>
+                    <span id="battleFund" class="text-green-400 font-mono font-bold text-xl"></span>
+                </div>
+                <div id="resultDetails" class="p-4 space-y-2 text-sm text-gray-400"></div>
+                <div class="p-6 bg-gray-900/50 grid grid-cols-2 gap-4">
+                    <button onclick="executeAction('snowball')" class="bg-blue-600 hover:bg-blue-700 text-white py-3 rounded font-bold text-xs uppercase">Punch Debt (Snowball)</button>
+                    <button onclick="executeAction('save')" class="bg-green-600 hover:bg-green-700 text-white py-3 rounded font-bold text-xs uppercase">Move to Vault</button>
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <script>
+        let state = JSON.parse(localStorage.getItem('battleState')) || { vault: 0, fixed: [], debts: [] };
+        let currentLeftover = 0;
+
+        function save() { 
+            localStorage.setItem('battleState', JSON.stringify(state)); 
+            render();
+        }
+
+        function addItem(type) {
+            if(type === 'fixed') state.fixed.push({ id: Date.now(), name: "Expense", amount: 0 });
+            else state.debts.push({ id: Date.now(), name: "Debt", balance: 0, min: 0, target: false });
+            save();
+        }
+
+        function removeItem(type, id) {
+            state[type] = state[type].filter(i => i.id !== id);
+            save();
+        }
+
+        function update(type, id, field, val) {
+            const item = state[type].find(i => i.id === id);
+            item[field] = (field === 'name' || field === 'target') ? val : (parseFloat(val) || 0);
+            if(field === 'target' && val === true) {
+                state.debts.forEach(d => { if(d.id !== id) d.target = false; });
+            }
+            save();
+        }
+
+        function adjustVault(direction) {
+            const amt = parseFloat(document.getElementById('withdrawAmt').value) || 0;
+            if(direction === 'out') state.vault -= amt;
+            document.getElementById('withdrawAmt').value = '';
+            save();
+        }
+
+        function render() {
+            document.getElementById('vaultDisplay').innerText = `$${state.vault.toFixed(2)}`;
+            const fCont = document.getElementById('fixedContainer');
+            fCont.innerHTML = '';
+            state.fixed.forEach(f => {
+                fCont.innerHTML += `<div class="flex gap-2 bg-gray-900 p-2 rounded">
+                    <input type="text" value="${f.name}" onchange="update('fixed', ${f.id}, 'name', this.value)" class="bg-transparent text-sm w-1/2 outline-none border-b border-gray-700">
+                    <input type="number" value="${f.amount}" onchange="update('fixed', ${f.id}, 'amount', this.value)" class="bg-transparent text-sm w-1/4 text-orange-400 outline-none border-b border-gray-700">
+                    <button onclick="removeItem('fixed', ${f.id})" class="text-gray-600 hover:text-red-500">&times;</button>
+                </div>`;
+            });
+
+            const dCont = document.getElementById('debtContainer');
+            dCont.innerHTML = '';
+            state.debts.forEach(d => {
+                dCont.innerHTML += `<div class="bg-gray-900 p-4 rounded-lg border ${d.target ? 'border-blue-500' : 'border-gray-700'} relative">
+                    <button onclick="removeItem('debt', ${d.id})" class="absolute top-2 right-2 text-gray-600">&times;</button>
+                    <input type="text" value="${d.name}" onchange="update('debt', ${d.id}, 'name', this.value)" class="bg-transparent font-bold text-blue-300 w-full outline-none border-b border-gray-800 mb-2">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div><label class="text-[10px] text-gray-500 uppercase italic">Balance</label>
+                        <input type="number" value="${d.balance}" onchange="update('debt', ${d.id}, 'balance', this.value)" class="w-full bg-gray-800 p-1 rounded text-sm outline-none"></div>
+                        <div><label class="text-[10px] text-gray-500 uppercase italic">Min Pay</label>
+                        <input type="number" value="${d.min}" onchange="update('debt', ${d.id}, 'min', this.value)" class="w-full bg-gray-800 p-1 rounded text-sm outline-none"></div>
+                    </div>
+                    <label class="flex items-center mt-3 gap-2 cursor-pointer">
+                        <input type="checkbox" ${d.target ? 'checked' : ''} onchange="update('debt', ${d.id}, 'target', this.checked)" class="accent-blue-500">
+                        <span class="text-[10px] uppercase font-bold ${d.target ? 'text-blue-400' : 'text-gray-600'}">Target for Snowball</span>
+                    </label>
+                </div>`;
+            });
+        }
+
+        function calculate() {
+            let cash = parseFloat(document.getElementById('paycheckInput').value) || 0;
+            const details = document.getElementById('resultDetails');
+            details.innerHTML = '';
+
+            state.fixed.forEach(f => { cash -= f.amount; details.innerHTML += `<div>Paid ${f.name}: -$${f.amount.toFixed(2)}</div>`; });
+            state.debts.forEach(d => { cash -= d.min; details.innerHTML += `<div>Min Payment ${d.name}: -$${d.min.toFixed(2)}</div>`; });
+
+            currentLeftover = Math.max(0, cash);
+            document.getElementById('battleFund').innerText = `$${currentLeftover.toFixed(2)}`;
+            document.getElementById('resultsArea').classList.remove('hidden');
+        }
+
+        function executeAction(type) {
+            if(type === 'save') {
+                state.vault += currentLeftover;
+            } else if (type === 'snowball') {
+                const target = state.debts.find(d => d.target) || state.debts[0];
+                if(target) target.balance = Math.max(0, target.balance - (target.min + currentLeftover));
+                // Update others by just their mins
+                state.debts.forEach(d => { if(d !== target) d.balance = Math.max(0, d.balance - d.min); });
+            }
+            document.getElementById('resultsArea').classList.add('hidden');
+            document.getElementById('paycheckInput').value = '';
+            save();
+        }
+
+        render();
+    </script>
+</body>
+</html>
